@@ -10,7 +10,9 @@ typedef struct{
 int parse_mnist(void){
 	printf("Parsing MNIST Dataset\n");
 
-	parse_mnist_images();
+	FILE *train_images_fp, train_labels_fp, test_images_fp, test_labels_fp;
+	train_images_fp = fopen("../datasets/train-images.idx3-ubyte", "r");
+	parse_mnist_images(train_images_fp);
 	
 	return 0;
 }
@@ -24,16 +26,14 @@ unsigned int reverse_endian(unsigned int value){
 
 }
 
-int parse_mnist_images(void){
-	FILE *train_images_fp;
+int parse_mnist_images(FILE *image_fp){
 	unsigned int magic_num, num_items, num_rows, num_cols;
-	train_images_fp = fopen("../datasets/train-images.idx3-ubyte", "r");
 
 	//Read Header
-	fread(&magic_num, 1, 4, train_images_fp);
-	fread(&num_items, 1, 4, train_images_fp);
-	fread(&num_rows, 1, 4, train_images_fp);
-	fread(&num_cols, 1, 4, train_images_fp);
+	fread(&magic_num, 1, 4, image_fp);
+	fread(&num_items, 1, 4, image_fp);
+	fread(&num_rows, 1, 4, image_fp);
+	fread(&num_cols, 1, 4, image_fp);
 
 	//Reverse Endianess if Little Endian
 	#ifdef MNIST_LITTLE_ENDIAN
