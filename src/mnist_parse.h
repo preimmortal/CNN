@@ -21,5 +21,7 @@ typedef struct{
 mnist_data *parse_image_file(FILE *image_fp);
 mnist_data *parse_label_file(FILE *label_fp);
 
+void mnist_print_image(mnist_data *d);
+void mnist_print_label(mnist_data *d);
 
 #endif

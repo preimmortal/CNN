@@ -87,4 +87,28 @@ mnist_data *parse_label_file(FILE *label_fp){
 	return mh;
 }
 
+void mnist_print_image(mnist_data *d){
+	printf("Data: %d %d %d %d\n", d->magic_num, d->num_items, d->num_rows, d->num_cols); 
 
+	int i, j, k;
+	for(i=0; i<d->num_items; i++){
+		for(j=0; j<d->num_rows; j++){
+			for(k=0; k<d->num_cols; k++){
+				if(d->data[i*d->num_rows*d->num_cols + j*d->num_cols + k]!=0) printf("  ");
+				//printf("%d ", train_data->data[i*train_data->num_rows*train_data->num_cols + j*train_data->num_cols + k]);
+				else printf("0 ");
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+}
+
+void mnist_print_label(mnist_data *d){
+	printf("Data: %d %d\n", d->magic_num, d->num_items); 
+
+	int i, j, k;
+	for(i=0; i<d->num_items; i++){
+		printf("%d \n", d->data[i]);
+	}
+}
