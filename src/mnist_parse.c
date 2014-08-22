@@ -1,52 +1,90 @@
 #include "mnist_parse.h"
 
-typedef struct{
-	unsigned int magic_num;
-	unsigned int num_items;
-	unsigned int num_rows;
-	unsigned int num_cols;
-}mnist_header;
-
-int parse_mnist(void){
-	printf("Parsing MNIST Dataset\n");
-
-	FILE *train_images_fp, train_labels_fp, test_images_fp, test_labels_fp;
-	train_images_fp = fopen("../datasets/train-images.idx3-ubyte", "r");
-	parse_mnist_images(train_images_fp);
-	
-	return 0;
-}
-
 //Endian Reverse Function
 unsigned int reverse_endian(unsigned int value){
 	return ((value>>24)&0x000000ff)
 		|((value<<24)&0xff000000)
 		|((value>>8)&0x0000ff00)
 		|((value<<8)&0x00ff0000);
-
 }
 
-int parse_mnist_images(FILE *image_fp){
-	unsigned int magic_num, num_items, num_rows, num_cols;
+mnist_data *parse_image_file(FILE *image_fp){
+	mnist_data *mh = (mnist_data *)malloc(sizeof(mnist_data));
 
 	//Read Header
-	fread(&magic_num, 1, 4, image_fp);
-	fread(&num_items, 1, 4, image_fp);
-	fread(&num_rows, 1, 4, image_fp);
-	fread(&num_cols, 1, 4, image_fp);
+	fread(&mh->magic_num, 1, 4, image_fp);
+	fread(&mh->num_items, 1, 4, image_fp);
+	fread(&mh->num_rows, 1, 4, image_fp);
+	fread(&mh->num_cols, 1, 4, image_fp);
 
 	//Reverse Endianess if Little Endian
 	#ifdef MNIST_LITTLE_ENDIAN
-	magic_num = reverse_endian(magic_num);
-	num_items = reverse_endian(num_items);
-	num_rows = reverse_endian(num_rows);
-	num_cols = reverse_endian(num_cols);
+	mh->magic_num = reverse_endian(mh->magic_num);
+	mh->num_items = reverse_endian(mh->num_items);
+	mh->num_rows = reverse_endian(mh->num_rows);
+	mh->num_cols = reverse_endian(mh->num_cols);
 	#endif
 
-	printf("Magic_Number: %d\nNum_Items: %d\nNum_Rows: %d\nNum_Cols: %d\n", magic_num, num_items, num_rows, num_cols); 
-	return 0;
+	printf("------------------------\n");
+	printf("Magic_Number: %d\nNum_Items: %d\nNum_Rows: %d\nNum_Cols: %d\n", mh->magic_num, mh->num_items, mh->num_rows, mh->num_cols); 
+	
+	if(mh->magic_num != 0x0803){
+		error("MNUM Incorrect - Check Endian\n");	
+		return NULL;
+	}
+
+	//Declare Data
+	char *data = (char *)malloc(sizeof(char)*mh->num_items*mh->num_rows*mh->num_cols);
+
+	printf("Reading Data..\n");
+	int i, j, k;
+	for(i=0; i<mh->num_items; i++){
+		for(j=0; j<mh->num_rows; j++){
+			for(k=0; k<mh->num_cols; k++){
+				fread(&data[i*mh->num_rows*mh->num_cols + j*mh->num_cols + k], 1, 1, image_fp);
+			}
+		}
+	}
+	printf("Done Reading Data\n");
+	mh->data = data;
+	printf("------------------------\n");
+	return mh;
 }
 
+mnist_data *parse_label_file(FILE *label_fp){
+	mnist_data *mh = (mnist_data *)malloc(sizeof(mnist_data));
+	mh->num_rows = 0;
+	mh->num_cols = 0;
 
+	//Read Header
+	fread(&mh->magic_num, 1, 4, label_fp);
+	fread(&mh->num_items, 1, 4, label_fp);
+
+	//Reverse Endianess if Little Endian
+	#ifdef MNIST_LITTLE_ENDIAN
+	mh->magic_num = reverse_endian(mh->magic_num);
+	mh->num_items = reverse_endian(mh->num_items);
+	#endif
+
+	printf("------------------------\n");
+	printf("Magic_Number: %d\nNum_Items: %d\n", mh->magic_num, mh->num_items); 
+	
+	if(mh->magic_num != 0x0801){
+		error("MNUM Incorrect - Check Endian\n");	
+		return NULL;
+	}
+
+	printf("Reading Data..\n");
+	char *data = malloc(sizeof(char)*mh->num_items);
+	int i;
+	for(i=0; i<mh->num_items; i++){
+		fread(&data[i], 1, 1, label_fp);
+		//printf("data[%d]: %d\n", i, data[i]); 
+	}
+	mh->data = data;
+	printf("Done Reading Data\n");
+	printf("------------------------\n");
+	return mh;
+}
 
 

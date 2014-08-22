@@ -8,5 +8,8 @@ EXECUTABLE=main
 all:
 	$(CC) -o $(EXECUTABLE) $(SOURCES)
 
+run:
+	./main
+
 clean:
 	rm $(EXECUTABLE)
